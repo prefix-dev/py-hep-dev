@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 340">
+  <defs>
+    <marker id="pb-arr" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
+      <path d="M0 0 L9 4.5 L0 9 Z" fill="#c14a26" />
+    </marker>
+    <style>
+      .box   { fill: #fffff8; stroke: #333; stroke-width: 1.4; }
+      .head  { font: italic 15px Georgia, "et-book", serif; fill: #111; text-anchor: middle; }
+      .sub   { font: 10.5px "IBM Plex Mono", Consolas, monospace; fill: #555; text-anchor: middle; }
+      .edge  { font: italic 12px Georgia, "et-book", serif; fill: #c14a26; text-anchor: middle; }
+      .link  { stroke: #c14a26; stroke-width: 1.4; fill: none; }
+      .col   { font: italic 12px Georgia, serif; fill: #888; text-anchor: middle; letter-spacing: 0.4px; }
+    </style>
+  </defs>
+
+  <text class="col" x="120"  y="14">source directory</text>
+  <text class="col" x="420"  y="14">build backend</text>
+  <text class="col" x="760"  y="14">conda package</text>
+  <text class="col" x="1070" y="14">workspace</text>
+
+  <!-- Python -->
+  <g>
+    <rect class="box" x="40" y="64" width="160" height="50" rx="4" />
+    <text class="head" x="120" y="86">Python package</text>
+    <text class="sub"  x="120" y="102">pyproject.toml</text>
+  </g>
+  <g>
+    <rect class="box" x="290" y="64" width="260" height="50" rx="4" />
+    <text class="head" x="420" y="86">pixi-build-python</text>
+    <text class="sub"  x="420" y="102">PEP 517 wheel → .conda</text>
+  </g>
+  <path class="link" d="M 200 89 L 285 89" marker-end="url(#pb-arr)" />
+
+  <!-- C++ -->
+  <g>
+    <rect class="box" x="40" y="132" width="160" height="50" rx="4" />
+    <text class="head" x="120" y="154">C++ project</text>
+    <text class="sub"  x="120" y="170">CMakeLists.txt</text>
+  </g>
+  <g>
+    <rect class="box" x="290" y="132" width="260" height="50" rx="4" />
+    <text class="head" x="420" y="154">pixi-build-cmake</text>
+    <text class="sub"  x="420" y="170">cmake --build → .conda</text>
+  </g>
+  <path class="link" d="M 200 157 L 285 157" marker-end="url(#pb-arr)" />
+
+  <!-- Rust -->
+  <g>
+    <rect class="box" x="40" y="200" width="160" height="50" rx="4" />
+    <text class="head" x="120" y="222">Rust crate</text>
+    <text class="sub"  x="120" y="238">Cargo.toml, src/</text>
+  </g>
+  <g>
+    <rect class="box" x="290" y="200" width="260" height="50" rx="4" />
+    <text class="head" x="420" y="222">pixi-build-rust</text>
+    <text class="sub"  x="420" y="238">cargo build → .conda</text>
+  </g>
+  <path class="link" d="M 200 225 L 285 225" marker-end="url(#pb-arr)" />
+
+  <!-- rattler-build -->
+  <g>
+    <rect class="box" x="40" y="268" width="160" height="50" rx="4" />
+    <text class="head" x="120" y="290">recipe</text>
+    <text class="sub"  x="120" y="306">recipe.yaml</text>
+  </g>
+  <g>
+    <rect class="box" x="290" y="268" width="260" height="50" rx="4" />
+    <text class="head" x="420" y="290">pixi-build-rattler-build</text>
+    <text class="sub"  x="420" y="306">any compiler → .conda</text>
+  </g>
+  <path class="link" d="M 200 293 L 285 293" marker-end="url(#pb-arr)" />
+
+  <!-- conda hub -->
+  <g>
+    <rect class="box" x="650" y="141" width="220" height="100" rx="4" />
+    <text class="head" x="760" y="176">.conda packages</text>
+    <text class="sub"  x="760" y="198">one binary format</text>
+    <text class="sub"  x="760" y="216">platform-tagged</text>
+  </g>
+
+  <path class="link" d="M 550 89  C 600 89  620 191 645 191" marker-end="url(#pb-arr)" />
+  <path class="link" d="M 550 157 C 600 157 620 191 645 191" marker-end="url(#pb-arr)" />
+  <path class="link" d="M 550 225 C 600 225 620 191 645 191" marker-end="url(#pb-arr)" />
+  <path class="link" d="M 550 293 C 600 293 620 191 645 191" marker-end="url(#pb-arr)" />
+
+  <!-- workspace -->
+  <g>
+    <rect class="box" x="970" y="141" width="200" height="100" rx="4" />
+    <text class="head" x="1070" y="174">pixi workspace</text>
+    <text class="sub"  x="1070" y="196">one lockfile</text>
+    <text class="sub"  x="1070" y="214">one env per platform</text>
+  </g>
+
+  <path class="link" d="M 870 191 L 965 191" marker-end="url(#pb-arr)" />
+  <text class="edge" x="918" y="182">resolved by</text>
+</svg>
