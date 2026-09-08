@@ -199,22 +199,9 @@ class: text-center
 
 # So, why did they all adopt it?
 
-<div class="flex justify-center mt-6">
-<div class="text-left">
-
-- build from source
-- simplify complex build environments
-- reproducible across platforms
-
-</div>
-</div>
-
 ---
 
-# Demo:
-
-Build Python from source!
-
+# Small example: build a prerelease CPython
 <div class="grid grid-cols-2 gap-6 mt-4 items-start">
 
 <Terminal title="install a prerelease CPython">
@@ -224,6 +211,9 @@ Build Python from source!
   <div class="term-line pl-8">--tag v3.15.0b3 \</div>
   <div class="term-line pl-8">--force-reinstall \</div>
   <div class="term-line pl-8">python</div>
+  <TermLine>python3.15</TermLine>
+  <div class="term-line pl-8">Python 3.15.0b3 (tags/v3.15.0b3-dirty:cf16a33fad, Sep  7 2026, 09:16:25) [Clang 23.1.0 ] on darwin</div>
+  <div class="term-line pl-8">>>> </div>
 </Terminal>
 
 <CodeWindow title="pixi.toml equivalent">
@@ -298,6 +288,76 @@ cython = "*"
 
 ---
 
+# Grow your project into a package
+
+<DocLink href="https://pixi.prefix.dev/latest/build/dev/" label="dev packages" />
+
+<div class="grid grid-cols-[1.2fr_1fr] gap-6 mt-2">
+
+<CodeWindow title="pixi.toml">
+
+```toml {lines: true}
+[workspace]
+channels = ["https://prefix.dev/conda-forge"]
+platforms = ["linux-64", "osx-arm64", "win-64"]
+preview = ["pixi-build"]
+
+# your project becomes a real conda package
+[package.build.backend]
+name = "pixi-build-python"
+[package.build.config]
+ignore-pypi-mapping = false
+
+[dependencies]
+pytest = "*"
+my-project = { path = "." }
+```
+
+</CodeWindow>
+
+<div>
+
+<v-clicks>
+
+- Adding a `[package]` section is the **same move** NumPy, SciPy and CPython made
+- `[dev]` + a **path dependency**: the package's build/host/run deps land in your env, the package itself isn't built. Fast dev loop
+- Path dependencies split one repo into **multiple packages** as it grows
+- From here: `pixi publish`, or others depend on you straight **from git**
+
+</v-clicks>
+
+</div>
+</div>
+
+---
+
+# Build and Ship a package: `pixi publish`
+
+<DocLink href="https://pixi.prefix.dev/latest/reference/cli/pixi/publish/" label="pixi publish" />
+
+<div class="grid grid-cols-2 gap-6 mt-4 items-start">
+
+<Terminal title="build & ship a package">
+  <TermLine>pixi publish --target-channel https://prefix.dev/my-channel</TermLine>
+  <TermLine output>✓ built, pushed, attested (OIDC)</TermLine>
+</Terminal>
+
+<div>
+
+<v-clicks>
+
+- **Publish** your package to a channel, SciPy already does this [in CI](https://github.com/scipy/scipy/blob/main/.github/workflows/pixi-packages.yml)
+-
+- **Trusted publishing**: OIDC, attestations, no long-lived tokens
+
+</v-clicks>
+
+</div>
+
+</div>
+
+---
+
 # 2. Many environments, one manifest
 
 <DocLink href="https://pixi.prefix.dev/latest/workspace/multi_environment/" label="environments" />
@@ -353,15 +413,16 @@ solve-group = "freethreading"
 
 <div class="grid grid-cols-2 gap-6 mt-2 items-start">
 
-<CodeWindow title="scipy/pixi.toml" href="https://github.com/scipy/scipy/blob/main/pixi.toml">
+<CodeWindow title="pixi.toml">
 
 ```toml {lines: true}
 [workspace]
 platforms = [
-  "linux-64", "osx-arm64", "win-64", "linux-aarch64",
   # same lockfile, GPU targets too:
   { platform = "linux-64", cuda = "12.9" },
   { platform = "linux-64", cuda = "13.0" },
+  { platform = "linux-64", archspec = "x86_64_v3"},
+  "linux-64", "osx-arm64", "win-64", "linux-aarch64",
 ]
 ```
 
@@ -392,7 +453,7 @@ platforms = ["linux-64", "linux-aarch64",
 
 ---
 
-# Notable recent improvements
+# Less known but big enablers
 
 <DocLink href="https://pixi.prefix.dev/latest/reference/pixi_manifest/" label="manifest" />
 
@@ -470,88 +531,128 @@ shared-lib = { workspace = true }
 
 ---
 
-# Build and Ship a package: `pixi publish`
+# Latest developments: conda-script
 
-<DocLink href="https://pixi.prefix.dev/latest/reference/cli/pixi/publish/" label="pixi publish" />
+`pixi run --script main.cpp`
 
-<div class="grid grid-cols-2 gap-6 mt-4 items-start">
+<div class="grid grid-cols-[minmax(0,7fr)_minmax(0,3fr)] gap-6 items-start">
 
-<Terminal title="build & ship a package">
-  <TermLine>pixi publish --target-channel https://prefix.dev/my-channel</TermLine>
-  <TermLine output>✓ built, pushed, attested (OIDC)</TermLine>
-</Terminal>
+<CodeWindow title="main.cpp (conda-script)">
 
-<div>
+<pre class="slidev-code script-config"><code><span class="config-comment">// /// conda-script</span>
+<span class="config-comment">// </span><span class="config-key">channels</span> = [<span class="config-string">"conda-forge"</span>]
+<span class="config-comment">// </span><span class="config-key">entrypoint</span> = <span class="config-string">"g++ -o ${CACHE}/main ${SCRIPT} -lfmt &amp;&amp; ${CACHE}/main"</span>
+<span class="config-comment">//</span>
+<span class="config-comment">// </span><span class="config-key">[dependencies]</span>
+<span class="config-comment">// </span><span class="config-key">gxx</span> = <span class="config-string">"*"</span>
+<span class="config-comment">// </span><span class="config-key">fmt</span> = <span class="config-string">"*"</span>
+<span class="config-comment">// /// end-conda-script</span></code></pre>
 
-<v-clicks>
+```cpp
+#include <fmt/core.h>
+#include <fmt/ranges.h>
+#include <vector>
 
-- **Publish** your package to a channel, SciPy already does this [in CI](https://github.com/scipy/scipy/blob/main/.github/workflows/pixi-packages.yml)
--
-- **Trusted publishing**: OIDC, attestations, no long-lived tokens
+int main() {
+    std::vector<int> primes{2, 3, 5, 7, 11};
+    fmt::print("primes: {}\n", fmt::join(primes, ", "));
+    fmt::print("pi is roughly {:.3f}\n", 3.14159);
+}
+```
 
-</v-clicks>
+</CodeWindow>
+
+<div class="pt-4">
+
+- Conda + PyPI
+- Any entrypoint
+- Any file extension
+- Optional Lockfile
+- Source dependencies
 
 </div>
 
 </div>
+
+<style>
+.script-config {
+  color: #3a3a33;
+  margin-bottom: 0 !important;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.script-config code {
+  font-size: inherit;
+  line-height: inherit;
+}
+.config-comment { color: #7c7452; font-style: italic; }
+.config-key { color: #ff2f00; }
+.config-string { color: #00501d; }
+</style>
 
 ---
 
-# Ship a whole environment: `pixi pack`
+# Latest developments: PEP 723
 
-<DocLink href="https://pixi.prefix.dev/latest/deployment/pixi_pack/" label="pixi pack" />
+`pixi run --script script.py`
 
-<div class="grid grid-cols-2 gap-6 mt-4 items-start">
+<div class="grid grid-cols-[minmax(0,7fr)_minmax(0,3fr)] gap-6 items-start pep-script">
 
-<Terminal title="freeze the environment">
-  <TermLine>pixi pack --platform linux-64</TermLine>
-  <TermLine output>📦 environment.tar, no pixi/conda needed on target</TermLine>
-</Terminal>
+<CodeWindow title="script.py (PEP723)">
 
-<div>
+<pre class="slidev-code script-config"><code><span class="config-comment"># /// script</span>
+<span class="config-comment"># </span><span class="config-key">requires-python</span> = <span class="config-string">"&gt;=3.11"</span>
+<span class="config-comment"># </span><span class="config-key">dependencies</span> = [<span class="config-string">"httpx"</span>]
+<span class="config-comment"># </span><span class="config-key"></span>
+<span class="config-comment"># </span><span class="config-key">[tool.pixi.workspace]</span>
+<span class="config-comment"># </span><span class="config-key">channels</span> = [<span class="config-string">"conda-forge"</span>]
+<span class="config-comment"># </span><span class="config-key"></span>
+<span class="config-comment"># </span><span class="config-key">[tool.pixi.dependencies]</span>
+<span class="config-comment"># </span><span class="config-key">gdal</span> = <span class="config-string">"*"</span>
+<span class="config-comment"># ///</span></code></pre>
 
-<v-clicks>
+```python
+import httpx
+from osgeo import ogr
+ogr.UseExceptions()
+response = httpx.get(
+  "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson"
+)
+dataset = ogr.Open(response.text)
+print(f"{dataset.GetLayer().GetFeatureCount()} earthquakes in the past hour")
+```
 
-- Freezes the **locked environment** into a single archive
-- Made for **air-gapped / cluster** runs: nothing to install on the target
-- Unpack and run: the same lockfile-exact environment, anywhere
+</CodeWindow>
 
-</v-clicks>
+<div class="pt-4">
 
-</div>
-
-</div>
-
-<div v-click class="mt-4 text-center opacity-80">
-
-Research → production, same tool, same lockfile.
-
-</div>
-
----
-layout: center
-class: text-center
----
-
-# This is the dream
-
-<div class="text-left mt-10 mx-auto w-max max-w-full">
-
-<Terminal title="Terminal">
-  <TermLine v-click="1">git clone https://github.com/my-org/my-science-project.git</TermLine>
-  <TermLine v-click="1">cd my-science-project</TermLine>
-  <TermLine v-click="2">pixi run start</TermLine>
-  <TermLine output v-click="2">✓ environment resolved & installed</TermLine>
-  <TermLine output v-click="2">✓ running analysis.py ...</TermLine>
-</Terminal>
+- Share with `uv`
+- No entrypoint needed
+- `pyproject.toml` like
+- `exclude-newer` locks
 
 </div>
 
-<div v-click="3" class="mt-8 opacity-80">
-
-That's the file Python, NumPy, SciPy, pandas and Xarray all committed. That's the why.
-
 </div>
+
+<style>
+.pep-script :deep(pre),
+.pep-script :deep(pre code) {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.script-config {
+  color: #3a3a33;
+  margin-bottom: 0 !important;
+}
+.script-config code {
+  font-size: inherit;
+  line-height: inherit;
+}
+.config-comment { color: #7c7452; font-style: italic; }
+.config-key { color: #ff2f00; }
+.config-string { color: #00501d; }
+</style>
 
 ---
 
@@ -606,59 +707,11 @@ Whatever the mode: commit `pixi.toml` **and** `pixi.lock`, teammates just `pixi 
 
 ---
 
-# Grow the environment into a package
-
-<DocLink href="https://pixi.prefix.dev/latest/build/dev/" label="dev packages" />
-
-<div class="grid grid-cols-[1.2fr_1fr] gap-6 mt-2">
-
-<CodeWindow title="pixi.toml">
-
-```toml {lines: true}
-[workspace]
-channels = ["https://prefix.dev/conda-forge"]
-platforms = ["linux-64", "osx-arm64", "win-64"]
-preview = ["pixi-build"]
-
-# your project becomes a real conda package
-[package.build.backend]
-name = "pixi-build-python"
-version = "*"
-
-[package.run-dependencies]
-numpy = "*"
-
-# develop against it, without installing it
-[dev]
-my-project = { path = "." }
-
-[dependencies]
-pytest = "*"
-```
-
-</CodeWindow>
-
-<div>
-
-<v-clicks>
-
-- Adding a `[package]` section is the **same move** NumPy, SciPy and CPython made
-- `[dev]` + a **path dependency**: the package's build/host/run deps land in your env, the package itself isn't built. Fast dev loop
-- Path dependencies split one repo into **multiple packages** as it grows
-- From here: `pixi publish`, or others depend on you straight **from git**
-
-</v-clicks>
-
-</div>
-</div>
-
----
-
 # Where you can help
 
 <v-clicks>
 
-- **Try Pixi** share your experience and help us and other improve it.
+- **Try Pixi** share your experience and help us and others improve it.
 - **[Contribute to conda-forge](https://conda-forge.org/docs/maintainer/adding_pkgs/)**: add the packages your field needs, so everyone can `pixi add` them
 - **Join our [Discord](https://discord.gg/kKV8ZxyzY4)** and help us and others with your experience, or just hang out and chat.
 
